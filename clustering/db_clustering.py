@@ -43,7 +43,9 @@ class Clustering:
 		if self.method != 'Kmeans':
 			assignments = clustering.labels_
 		else:
-			assignments = clustering.dtrajs
+			dtrajs = clustering.dtrajs
+			dt2 = [i.astype(np.int_) for i in dtrajs]
+    		assignments = np.concatenate(dt2)
 
 		print('Number of clusters is: ', max(assignments)+1)
 		if self.method == 'HDBSCAN' or self.method == 'HDBSCAN':
