@@ -36,13 +36,16 @@ class Clustering:
 			else:
 				clustering = DBSCAN(eps= self.eps, min_samples= self.min_samples).fit(f_data)
 		elif self.method == 'APLoD':
-			clustering = aplod.APLoD(metric='euclidean', n_samples = 30000, n_neighbors = self.min_samples).fit(f_data)
+			clustering = aplod.APLoD(metric='euclidean', n_samples = 10000, n_neighbors = self.min_samples).fit(f_data)
 		elif self.method == 'Kmeans':
-			clustering = KMeans(n_clusters =self.min_samples, init='k-means++', max_iter = 50).fit(f_data)
+			clustering = coor.cluster_kmeans(list(f_data), k =self.min_samples, init_strategy='kmeans++', max_iter = 50, tolerance=1e-04)
 		
-		assignments = clustering.labels_
-		print('Number of clusters is: ', max(assignments)+1)
+		if self.method != 'Kmeans':
+			assignments = clustering.labels_
+		else:
+			assignments = clustering.dtrajs
 
+		print('Number of clusters is: ', max(assignments)+1)
 		if self.method == 'HDBSCAN' or self.method == 'HDBSCAN':
 			labels_tba = []
 			for i, l in enumerate(assignments):
