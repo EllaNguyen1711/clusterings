@@ -100,7 +100,7 @@ class Clustering:
 		wo_stride_f_assignments = []
 		for i in range(len(read_dt[1])):
 			cl = wo_stride_assig[row_indices == i]
-			wo_stride_f_assignments.append(cl.tolist())
+			wo_stride_f_assignments.append(np.array(cl))
 
 		return wo_stride_f_assignments
 
