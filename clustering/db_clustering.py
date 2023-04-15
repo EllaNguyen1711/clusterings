@@ -4,7 +4,7 @@ import h5py as h5
 import pickle
 import hdbscan
 import hkdataminer.cluster.aplod_ as aplod
-from sklearn.cluster import DBSCAN
+from sklearn.cluster import DBSCAN, KMeans
 import pyemma.coordinates as coor
 
 
@@ -36,8 +36,10 @@ class Clustering:
 			else:
 				clustering = DBSCAN(eps= self.eps, min_samples= self.min_samples).fit(f_data)
 		elif self.method == 'APLoD':
-			lustering = aplod.APLoD(metric='euclidean', n_samples = 30000, n_neighbors = self.min_samples).fit(f_data)
-
+			clustering = aplod.APLoD(metric='euclidean', n_samples = 30000, n_neighbors = self.min_samples).fit(f_data)
+		elif self.method == 'Kmeans':
+			clustering = KMeans(n_clusters =self.min_samples, init='k-means++', max_iter = 50).fit(f_data)
+		
 		assignments = clustering.labels_
 		print('Number of clusters is: ', max(assignments)+1)
 
