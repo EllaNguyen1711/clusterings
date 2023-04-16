@@ -24,7 +24,7 @@ class Clustering:
 		index = [np.concatenate(([[i]*dt[key].shape[0]], [np.arange(dt[key].shape[0])]), axis=0).T for i, key in enumerate(dt.keys())]
 		return n_dt, index
 
-	def density_based_w_stride(self):
+	def density_based_w_stride(self, aplod_n_samples = 5000, kmeans_max_iter = 50, tol=1e-04):
 		read_dt = self.read_h5()
 		f_data = np.concatenate(read_dt[0])[::self.stride]
 		new_index = np.concatenate(read_dt[1])[::self.stride]
@@ -36,9 +36,9 @@ class Clustering:
 			else:
 				clustering = DBSCAN(eps= self.eps, min_samples= self.min_samples).fit(f_data)
 		elif self.method == 'APLoD':
-			clustering = aplod.APLoD(metric='euclidean', n_samples = 10000, n_neighbors = self.min_samples).fit(f_data)
+			clustering = aplod.APLoD(metric='euclidean', n_samples = aplod_n_samples, n_neighbors = self.min_samples).fit(f_data)
 		elif self.method == 'Kmeans':
-			clustering = coor.cluster_kmeans(list(f_data), k =self.min_samples, init_strategy='kmeans++', max_iter = 50, tolerance=1e-04)
+			clustering = coor.cluster_kmeans(list(f_data), k =self.min_samples, init_strategy='kmeans++', max_iter = kmeans_max_iter, tolerance=tol)
 		
 		if self.method != 'Kmeans':
 			assignments = clustering.labels_
