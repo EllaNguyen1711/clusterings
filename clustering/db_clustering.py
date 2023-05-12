@@ -75,13 +75,14 @@ class Clustering:
                 print('Repeats of Kmeans: ', i)
 
         assignments = np.array(clustering.labels_)
-        self.raw_assignments = assignments
-        return self.raw_assignments
+        return assignments
 
     def get_dtrajs(self):
         new_index = np.concatenate(self.index)[::self.stride][:, 0]
+        raw_assignments = self.density_based_w_stride()
+
         if self.method == 'HDBSCAN' or self.method == 'DBSCAN':
-            labels_tba = TBA(self.raw_assignments)
+            labels_tba = TBA(raw_assignments)
             f_assignments = []
             for n in range(len(self.index)):
                 cl = labels_tba[new_index == n]
@@ -89,27 +90,26 @@ class Clustering:
         else:
             f_assignments = []
             for n in range(len(self.index)):
-                cl = self.raw_assignments[new_index == n]
+                cl = raw_assignments[new_index == n]
                 f_assignments.append(np.array(cl))
 
-        self.f_assignments = f_assignments
-        return self.f_assignments
+        return f_assignments
 
     def transform_to_full(self):
+    	f_assignments = self.get_dtrajs()
         fin_assignments = []
         for j, c in enumerate(self.index):
-            if len(c) <= len(self.f_assignments[j])*self.stride:
+            if len(c) <= len(f_assignments[j])*self.stride:
                 wo_stride_cl = np.concatenate(
-                    [[n]*self.stride for n in self.f_assignments[j]])[:len(c)]
+                    [[n]*self.stride for n in f_assignments[j]])[:len(c)]
             else:
                 t1 = np.concatenate(
-                    [[n]*self.stride for n in self.f_assignments[j]])
+                    [[n]*self.stride for n in f_assignments[j]])
                 t2 = np.concatenate(
-                    [[self.f_assignments[j][-1]]*(len(c) - len(self.f_assignments[j])*self.stride)])
+                    [[f_assignments[j][-1]]*(len(c) - len(f_assignments[j])*self.stride)])
                 wo_stride_cl = np.concatenate([t1, t2])
             fin_assignments.append(wo_stride_cl)
-        self.fin_assignments = fin_assignments
-        return self.fin_assignments
+        return fin_assignments
 
 
 if __name__ == "__main__":  # pragma: no cover
