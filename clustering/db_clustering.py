@@ -7,6 +7,7 @@ import hkdataminer.cluster.aplod_ as aplod
 from sklearn.cluster import DBSCAN, KMeans
 import pyemma.coordinates as coor
 
+
 def TBA(assignments):
     labels_tba = []
     for i, l in enumerate(assignments):
@@ -22,103 +23,113 @@ def TBA(assignments):
             labels_tba.append(l)
     return np.array(labels_tba)
 
+
 class READ_h5:
 
-	def __init__(self, FN):
-		self.FN = FN
+    def __init__(self, FN):
+        self.FN = FN
 
-	def read_h5(FN, dim=None):
-	    dt = h5.File(self.FN, 'r')
-	    n_dt = [np.array(dt[key][:, :dim] if dim is not None else dt[key]) for key in dt.keys()]
-	    index = [np.concatenate(([[i]*dt[key].shape[0]], [np.arange(dt[key].shape[0])]), axis=0).T for i, key in enumerate(dt.keys())]
-	    return n_dt, index
+    def read_h5(FN, dim=None):
+        dt = h5.File(self.FN, 'r')
+        n_dt = [np.array(dt[key][:, :dim] if dim is not None else dt[key])
+                for key in dt.keys()]
+        index = [np.concatenate(([[i]*dt[key].shape[0]], [np.arange(dt[key].shape[0])]),
+                                axis=0).T for i, key in enumerate(dt.keys())]
+        return n_dt, index
 
 
 class Clustering:
 
-	def __init__(self, data, index, method, sel_k, stride):
-		self.data = data
-		self.index = index
-		self.method = method
-		self.sel_k = sel_k
-		self.stride = stride
+    def __init__(self, data, index, method, sel_k, stride):
+        self.data = data
+        self.index = index
+        self.method = method
+        self.sel_k = sel_k
+        self.stride = stride
 
-	def density_based_w_stride(self, max_iter = 300, n_samples = 1000, eps = 0.3):
-	    f_data = np.concatenate(self.data)[::self.stride]
-	    new_index = np.concatenate(self.index)[::self.stride]
-	    if self.method == 'HDBSCAN':
-	        clustering = hdbscan.HDBSCAN(min_cluster_size= self.sel_k,  gen_min_span_tree=True).fit(f_data)
-	    elif self.method == 'DBSCAN':
-	        if self.eps == None:
-	            raise ValueError('Need to provide an EPS value!!!')
-	        else:
-	            clustering = DBSCAN(eps= eps, min_samples= self.sel_k).fit(f_data)
-	    elif self.method == 'APLoD':
-	        clustering = aplod.APLoD(metric='euclidean', n_samples = n_samples, n_neighbors = self.sel_k).fit(f_data)
-	    elif self.method == 'Kmeans':
-	        clustering = None
-	        i = 0
-	        while i < 3:
-	            kmeans = KMeans(n_clusters=self.sel_k, max_iter = max_iter)
-	            clustering = kmeans.fit(f_data)
-	            print ('Number of iterations have been done: ', clustering.n_iter_)
-	            if clustering.n_iter_ < kmeans.max_iter:
-	                break
-	            i += 1
-	            print ('Repeats of Kmeans: ', i)
+    def density_based_w_stride(self, max_iter=300, n_samples=1000, eps=0.3):
+        f_data = np.concatenate(self.data)[::self.stride]
+        new_index = np.concatenate(self.index)[::self.stride]
+        if self.method == 'HDBSCAN':
+            clustering = hdbscan.HDBSCAN(
+                min_cluster_size=self.sel_k,  gen_min_span_tree=True).fit(f_data)
+        elif self.method == 'DBSCAN':
+            if self.eps == None:
+                raise ValueError('Need to provide an EPS value!!!')
+            else:
+                clustering = DBSCAN(
+                    eps=eps, min_samples=self.sel_k).fit(f_data)
+        elif self.method == 'APLoD':
+            clustering = aplod.APLoD(
+                metric='euclidean', n_samples=n_samples, n_neighbors=self.sel_k).fit(f_data)
+        elif self.method == 'Kmeans':
+            clustering = None
+            i = 0
+            while i < 3:
+                kmeans = KMeans(n_clusters=self.sel_k, max_iter=max_iter)
+                clustering = kmeans.fit(f_data)
+                print('Number of iterations have been done: ', clustering.n_iter_)
+                if clustering.n_iter_ < kmeans.max_iter:
+                    break
+                i += 1
+                print('Repeats of Kmeans: ', i)
 
-	    assignments = np.array(clustering.labels_)
-	    self.raw_assignments = assignments
-	    return self.raw_assignments
+        assignments = np.array(clustering.labels_)
+        self.raw_assignments = assignments
+        return self.raw_assignments
 
-	def get_dtrajs(self):
-	    new_index = np.concatenate(self.index)[::self.stride][:, 0]
-	    if self.method == 'HDBSCAN' or self.method == 'DBSCAN':
-	        labels_tba = TBA(self.raw_assignments)
-	        f_assignments = []
-	        for n in range(len(self.index)):
-	            cl = labels_tba[new_index == n]
-	            f_assignments.append(np.array(cl))
-	    else:
-	        f_assignments = []
-	        for n in range(len(self.index)):
-	            cl = self.raw_assignments[new_index == n]
-	            f_assignments.append(np.array(cl))
+    def get_dtrajs(self):
+        new_index = np.concatenate(self.index)[::self.stride][:, 0]
+        if self.method == 'HDBSCAN' or self.method == 'DBSCAN':
+            labels_tba = TBA(self.raw_assignments)
+            f_assignments = []
+            for n in range(len(self.index)):
+                cl = labels_tba[new_index == n]
+                f_assignments.append(np.array(cl))
+        else:
+            f_assignments = []
+            for n in range(len(self.index)):
+                cl = self.raw_assignments[new_index == n]
+                f_assignments.append(np.array(cl))
 
-	    self.f_assignments = f_assignments
-	    return self.f_assignments
+        self.f_assignments = f_assignments
+        return self.f_assignments
 
-	def transform_to_full(self):
-	    fin_assignments = []
-	    for j, c in enumerate(self.index):
-	        if len(c) <= len(self.f_assignments[j])*self.stride:
-	            wo_stride_cl = np.concatenate([[n]*self.stride for n in self.f_assignments[j]])[:len(c)]
-	        else:
-	            t1 = np.concatenate([[n]*self.stride for n in self.f_assignments[j]])
-	            t2 = np.concatenate([[self.f_assignments[j][-1]]*(len(c) - len(self.f_assignments[j])*self.stride)])
-	            wo_stride_cl = np.concatenate([t1, t2])
-	        fin_assignments.append(wo_stride_cl)
-	    self.fin_assignments = fin_assignments
-	    return self.fin_assignments
+    def transform_to_full(self):
+        fin_assignments = []
+        for j, c in enumerate(self.index):
+            if len(c) <= len(self.f_assignments[j])*self.stride:
+                wo_stride_cl = np.concatenate(
+                    [[n]*self.stride for n in self.f_assignments[j]])[:len(c)]
+            else:
+                t1 = np.concatenate(
+                    [[n]*self.stride for n in self.f_assignments[j]])
+                t2 = np.concatenate(
+                    [[self.f_assignments[j][-1]]*(len(c) - len(self.f_assignments[j])*self.stride)])
+                wo_stride_cl = np.concatenate([t1, t2])
+            fin_assignments.append(wo_stride_cl)
+        self.fin_assignments = fin_assignments
+        return self.fin_assignments
 
-if __name__ == "__main__": # pragma: no cover
+
+if __name__ == "__main__":  # pragma: no cover
     # Do something if this file is invoked on its own
     import time
     import os
     import numpy as np
 
     mod_path = os.getcwd()
-	FN = mod_path + '/data/test.h5'
+    FN = mod_path + '/data/test.h5'
 
-	read_dt = READ_h5(FN)
-	data = read_dt[0]
-	index = read_dt[1]
-	method = 'DBSCAN'
-	sel_k = 200
-	stride = 2
+    read_dt = READ_h5(FN)
+    data = read_dt[0]
+    index = read_dt[1]
+    method = 'DBSCAN'
+    sel_k = 200
+    stride = 2
 
     start_time = time.time()
-    
+
     clustering = Clustering(data, index, method, sel_k, stride)
     dtrajs = clustering.transform_to_full()
     np.save(mod_path + '/data/dtrajs_test.npy', dtrajs)
