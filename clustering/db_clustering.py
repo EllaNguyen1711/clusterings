@@ -29,7 +29,7 @@ class READ_h5:
     def __init__(self, FN):
         self.FN = FN
 
-    def read_h5(FN, dim=None):
+    def read_h5(self, dim=None):
         dt = h5.File(self.FN, 'r')
         n_dt = [np.array(dt[key][:, :dim] if dim is not None else dt[key])
                 for key in dt.keys()]
@@ -122,8 +122,8 @@ if __name__ == "__main__":  # pragma: no cover
     FN = mod_path + '/data/test.h5'
 
     read_dt = READ_h5(FN)
-    data = read_dt[0]
-    index = read_dt[1]
+    data = read_dt.read_h5()[0]
+    index = read_dt.read_h5()[1]
     method = 'DBSCAN'
     sel_k = 200
     stride = 2
