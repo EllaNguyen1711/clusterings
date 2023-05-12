@@ -54,7 +54,7 @@ class Clustering:
             clustering = hdbscan.HDBSCAN(
                 min_cluster_size=self.sel_k,  gen_min_span_tree=True).fit(f_data)
         elif self.method == 'DBSCAN':
-            if self.eps == None:
+            if eps == None:
                 raise ValueError('Need to provide an EPS value!!!')
             else:
                 clustering = DBSCAN(
