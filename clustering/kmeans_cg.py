@@ -6,6 +6,7 @@ from multiprocessing import Pool
 import pickle
 import pyemma.coordinates as coor
 
+
 def kmeans(data, n_clusters):
     data = list(data)
     cl_ = coor.cluster_kmeans(data, k=n_clusters, max_iter=50)
@@ -14,13 +15,15 @@ def kmeans(data, n_clusters):
     cluster_ind = cl_.index_clusters
     return fin_dtrajs, cluster_centers, cluster_ind
 
-def form_clindexes(dtrajs): 
-    #Convert dtrajs of assigments to cluster indexes
+
+def form_clindexes(dtrajs):
+    # Convert dtrajs of assigments to cluster indexes
     cl = [[] for _ in range(max(np.concatenate(dtrajs))+1)]
     for j, traj in enumerate(dtrajs):
         for ind, i in enumerate(traj):
             cl[i].append([j, ind])
     return cl
+
 
 def find_k_closest(centroids, data, k=1, distance_norm=2):
     kdtree = cKDTree(data, leafsize=16)
@@ -30,22 +33,26 @@ def find_k_closest(centroids, data, k=1, distance_norm=2):
     values = data[indices]
     return indices, values
 
+
 def cluster_tica(dt_FN, cl_index, center):
-    #Rewrite tica data assigned to cluster #n
+    # Rewrite tica data assigned to cluster #n
     with h5.File(dt_FN, 'r') as tica_data:
-        cluster_tica = np.array([tica_data['%04d'%ind[0]][ind[1]] for ind in cl_index])
+        cluster_tica = np.array(
+            [tica_data['%04d' % ind[0]][ind[1]] for ind in cl_index])
     indices, values = find_k_closest(center, cluster_tica)
     fin_ind = cl_index[indices]
     return fin_ind, indices, values
 
+
 class Transform:
-    #Transform tica data from trajs to clusters in order to be ready for the next clustering 
-    
+    # Transform tica data from trajs to clusters in order to be ready for the next clustering
+
     def __init__(self, dt_FN, cluster_ind, cluster_centers):
-        self.dt_FN = dt_FN 
+        self.dt_FN = dt_FN
         self.cluster_ind = cluster_ind
         self.cluster_centers = cluster_centers
-        self.var = [[self.dt_FN, self.cluster_ind[i], ct] for i, ct in enumerate(self.cluster_centers)]
+        self.var = [[self.dt_FN, self.cluster_ind[i], ct]
+                    for i, ct in enumerate(self.cluster_centers)]
 
     def chunked_iterable(self, iterable, size):
         it = iter(iterable)
@@ -63,14 +70,3 @@ class Transform:
             ind.append([val[0] for val in traj_list])
             tic.append([val[2] for val in traj_list])
         return ind, tic
-
-
-
-
-
-
-
-
-
-
-

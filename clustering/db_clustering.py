@@ -96,7 +96,7 @@ class Clustering:
         return f_assignments
 
     def transform_to_full(self):
-    	f_assignments = self.get_dtrajs()
+        f_assignments = self.get_dtrajs()
         fin_assignments = []
         for j, c in enumerate(self.index):
             if len(c) <= len(f_assignments[j])*self.stride:
