@@ -124,8 +124,9 @@ if __name__ == "__main__":  # pragma: no cover
     read_dt = READ_h5(FN)
     data = read_dt.read_h5()[0]
     index = read_dt.read_h5()[1]
-    method = 'DBSCAN'
-    sel_k = 200
+    print (index)
+    method = 'HDBSCAN'
+    sel_k = 5
     stride = 2
 
     start_time = time.time()
