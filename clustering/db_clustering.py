@@ -79,7 +79,7 @@ class Clustering:
 
     def get_dtrajs(self, max_iter= 300, n_samples = 1000, eps=0.3):
         new_index = np.concatenate(self.index)[::self.stride][:, 0]
-        raw_assignments = self.density_based_w_stride(max_iter, n_samples, eps)
+        raw_assignments = self.density_based_w_stride(max_iter=max_iter, n_samples=n_samples, eps=eps)
 
         if self.method == 'HDBSCAN' or self.method == 'DBSCAN':
             labels_tba = TBA(raw_assignments)
